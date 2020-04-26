@@ -32,6 +32,16 @@ class Entry:
     note: str
 
 
+def clean_decimal(raw, allow_null=False):
+    """Return a decimal from a number of format X,XXX.XX."""
+    cleaned = raw.strip().replace(',', '')
+    if cleaned:
+        return Decimal(cleaned)
+    if allow_null:
+        return Decimal(0)
+    raise ValueError(f"Did not know how to handle {raw}")
+
+
 def read_in(fd):
     """Read HTML table from file and output entries."""
     contents = fd.read()
@@ -51,7 +61,7 @@ def read_in(fd):
         date_raw = tds[0].string.strip()
         amount_raw = tds[2].find_all("div")[1].string.strip()
         memo = tds[1].string.strip()
-        amount = Decimal(amount_raw.replace(',', ''))
+        amount = clean_decimal(amount_raw)
         if memo == "チャージ":
             amount *= -1
 
@@ -59,9 +69,9 @@ def read_in(fd):
             date=datetime.date.fromisoformat(date_raw.replace("/", "-")),
             memo=memo,
             amount=amount,
-            fee=Decimal(tds[3].string.strip() or 0),
-            atm_fee=Decimal(tds[4].string.strip() or 0),
-            conversion_fee=Decimal(tds[5].string.strip() or 0),
+            fee=clean_decimal(tds[3].string, allow_null=True),
+            atm_fee=clean_decimal(tds[4].string, allow_null=True),
+            conversion_fee=clean_decimal(tds[5].string, allow_null=True),
             decision=tds[6].string.strip(),
             tx_id=tds[7].string.strip(),
             note=tds[8].string.strip(),
