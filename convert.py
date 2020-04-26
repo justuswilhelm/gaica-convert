@@ -89,7 +89,8 @@ def main(args):
     2) Return if nothing was read in
     3) Write contents to csv file
     """
-    gl = path.join(args.input_folder, "*.html")
+    # Expected YYYY/MM/NO.html
+    gl = path.join(args.input_folder, "*/*/*.html")
     contents = set()
     for file in glob.glob(gl):
         logger.info("Reading in %s", file)
