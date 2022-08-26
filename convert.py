@@ -9,6 +9,7 @@ from decimal import Decimal
 import logging
 
 from bs4 import BeautifulSoup
+import toml
 
 
 CHARSET = "shift_jisx0213"
@@ -81,7 +82,7 @@ def read_in(fd):
     return entries
 
 
-def main(args):
+def main(kwargs):
     """
     Main method.
 
@@ -90,7 +91,7 @@ def main(args):
     3) Write contents to csv file
     """
     # Expected YYYY/MM/NO.html
-    gl = path.join(args.input_folder, "*/*/*.html")
+    gl = path.join(kwargs["input_folder"], "*/*/*.html")
     contents = set()
     for file in glob.glob(gl):
         logger.info("Reading in %s", file)
@@ -101,10 +102,13 @@ def main(args):
         logger.info("Nothing was read in")
         return
     logger.info("%d rows were read in total", len(contents))
+    output = path.join(
+        kwargs["output_folder"],
+        datetime.date.today().isoformat(),
+    ) + ".csv"
+    logger.info("Writing to %s", output)
 
-    logger.info("Writing to %s", args.output)
-
-    with open(args.output, 'w') as fd:
+    with open(output, 'w') as fd:
         writer = csv.DictWriter(
             fd,
             asdict(next(iter(contents))).keys(),
@@ -115,8 +119,6 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("input_folder")
-    parser.add_argument("output")
-    args = parser.parse_args()
-    main(args)
+    with open("config.toml") as fd:
+        config = toml.load(fd)
+    main(config)
